@@ -1,11 +1,22 @@
-import { Check, Edit3, HelpCircle, ImageIcon, Palette, Pencil, Search, Star, Upload, X } from "lucide-react"
-import Input from "../../ui/Input"
-import React, { useEffect, useState} from "react"
-import consumeContext from "../../../context/context"
-import { APP_BASE_URL, convertToBase64 } from "../../../utils/helpers"
-import LightBox from "../../lightbox/LightBox"
+import {
+  Check,
+  Edit3,
+  HelpCircle,
+  ImageIcon,
+  Palette,
+  Pencil,
+  Search,
+  Star,
+  Upload,
+  X,
+} from "lucide-react";
+import Input from "../../ui/Input";
+import React, { useEffect, useState } from "react";
+import consumeContext from "../../../context/context";
+import { APP_BASE_URL, convertToBase64 } from "../../../utils/helpers";
+import LightBox from "../../lightbox/LightBox";
 
-const validImgFile = [".png", ".jpg", ".jpeg", ".webp"]
+const validImgFile = [".png", ".jpg", ".jpeg", ".webp"];
 
 const DesignSelectionUI = ({
   category,
@@ -18,62 +29,78 @@ const DesignSelectionUI = ({
   currentNote,
   setNote,
   allCollections,
-  step
+  step,
 }) => {
-  const { setShowHelp, uploadedFile } = consumeContext()
-  const [searchTerm, setSearchTerm] = useState("") // NEU: Suchbegriff
+  const { setShowHelp, uploadedFile } = consumeContext();
+  const [searchTerm, setSearchTerm] = useState(""); // NEU: Suchbegriff
   const designTypes = [
     {
       id: "Motiv",
       label: "Motiv Katalog",
       sub: "Vorlagen",
       icon: <Palette />,
-      colorClass: "bg-blue-100 text-blue-600"
+      colorClass: "bg-blue-100 text-blue-600",
     },
     {
       id: "Special",
       label: "Special Styles",
       sub: "Bitmoji...",
       icon: <Star />,
-      colorClass: "bg-purple-100 text-purple-600"
+      colorClass: "bg-purple-100 text-purple-600",
     },
     {
       id: "Upload",
       label: "Eigener Upload",
       sub: "Logo / Datei",
       icon: <Upload />,
-      colorClass: "bg-green-100 text-green-600"
+      colorClass: "bg-green-100 text-green-600",
     },
-    { id: "None", label: "Unbedruckt", sub: "Nur Textil", icon: <X />, colorClass: "bg-gray-100 text-gray-600" }
-  ]
+    {
+      id: "None",
+      label: "Unbedruckt",
+      sub: "Nur Textil",
+      icon: <X />,
+      colorClass: "bg-gray-100 text-gray-600",
+    },
+  ];
 
   // Bestimmen, ob eine detaillierte Auswahl getroffen wurde
-  const isDetailedSelection = currentDesign || currentFile || currentType === "None"
-  const handleFileUpload = e => {
-    console.log(currentType)
-    const file = e.target.files[0]
-    const fileExt = file ? `.${file.name.split(".").pop().toLowerCase()}` : ""
+  const isDetailedSelection =
+    (currentType !== "Special" && (currentDesign || currentFile)) ||
+    (currentType === "Special" && currentDesign && currentFile) ||
+    currentType === "None";
+  const handleFileUpload = (e) => {
+    console.log(currentType);
+    const file = e.target.files[0];
+    const fileExt = file ? `.${file.name.split(".").pop().toLowerCase()}` : "";
     if (file && validImgFile.includes(fileExt)) {
       convertToBase64(file)
-        .then(imgBase64 => {
+        .then((imgBase64) => {
           if (imgBase64) {
-            setFile({ name: file.name, data: imgBase64 })
-            setDesign({title:file.name, name: file.name, image: imgBase64,type: currentType })
+            setFile({ name: file.name, data: imgBase64 });
+            if (currentType !== "Special") {
+              setDesign({
+                title: file.name,
+                name: file.name,
+                image: imgBase64,
+                type: currentType,
+              });
+            }
           }
         })
-        .catch(err => {
-          console.error("Fehler beim Konvertieren der Datei:", err)
-        })
+        .catch((err) => {
+          console.error("Fehler beim Konvertieren der Datei:", err);
+        });
     } else {
-      alert("Bitte eine gültige Bilddatei hochladen (png, jpg, jpeg, webp).")
+      alert("Bitte eine gültige Bilddatei hochladen (png, jpg, jpeg, webp).");
     }
-  }
+  };
 
   const handleReset = () => {
-    setType(null)
-    setDesign(null)
-    setFile(null)
-  }
+    setType(null);
+    setDesign(null);
+    setFile(null);
+  };
 
   // const ImagePreview = () => {
   //   const fileToShow = uploadedFile?.data || currentFile?.data
@@ -86,65 +113,71 @@ const DesignSelectionUI = ({
   //   )
   // }
 
-     const [allMotives,setAllMotives] = useState([]);
-     const [visibleCount,setVisibleCount] = useState(6);
-     const [loading,setLoading] = useState(true);
+  const [allMotives, setAllMotives] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [loading, setLoading] = useState(true);
 
-     async function  fetchMotives() {
-      setAllMotives([]);
-      setLoading(true);
-      if(!category){
-        setLoading(false)
-        return
-      };
-      let AllCollections = allCollections;
-      let fCol = null;
-      if(AllCollections){
-       fCol = AllCollections.find(col => col.title === category);
-      }else{
-       const savedData = JSON.parse(localStorage.getItem("abschlussklamotten_data"))
-       fCol = savedData.allCollections.find(col => col.title === category);
-      }
-      console.log(fCol)
-      if(!fCol){ 
-        setLoading(false)
-        return
-      };
-     const r = await fetch(`https://dev.hamzadeveloper.com/api/abschlussklamotten/products?collection_id=${fCol.id.split('/').pop()}`, {
-         headers: {"Content-Type": "application/json" },
-       });
-       const data = await r.json();
-       if(data.status){
-         setAllMotives(data.products);
-        }else{
-          setAllMotives([]);
-        }
-        setLoading(false);
-       console.log("Raw motives data from Shopify API:", data);
+  async function fetchMotives() {
+    setAllMotives([]);
+    setLoading(true);
+    if (!category) {
+      setLoading(false);
+      return;
     }
-  
-   useEffect(() => {
-     //   // if(step !== 2 && subStep !== 'B') return;
-     //    // Fetch collections or any other initial data here if needed
-     fetchMotives()
-    }, [category, allCollections])
+    let AllCollections = allCollections;
+    let fCol = null;
+    if (AllCollections) {
+      fCol = AllCollections.find((col) => col.title === category);
+    } else {
+      const savedData = JSON.parse(
+        localStorage.getItem("abschlussklamotten_data"),
+      );
+      fCol = savedData.allCollections.find((col) => col.title === category);
+    }
+    console.log(fCol);
+    if (!fCol) {
+      setLoading(false);
+      return;
+    }
+    const r = await fetch(
+      `https://dev.hamzadeveloper.com/api/abschlussklamotten/products?collection_id=${fCol.id.split("/").pop()}`,
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const data = await r.json();
+    if (data.status) {
+      setAllMotives(data.products);
+    } else {
+      setAllMotives([]);
+    }
+    setLoading(false);
+    console.log("Raw motives data from Shopify API:", data);
+  }
+
+  useEffect(() => {
+    //   // if(step !== 2 && subStep !== 'B') return;
+    //    // Fetch collections or any other initial data here if needed
+    fetchMotives();
+  }, [category, allCollections]);
 
   //  fetchMotives()
 
   // Komponente für die kompakte Anzeige
   const CompactSelection = () => {
-    let display = "Nicht gewählt"
-    let icon = <Pencil size={18} />
+    let display = "Nicht gewählt";
+    let icon = <Pencil size={18} />;
 
     if (currentDesign) {
-      display = currentDesign?.title ? currentDesign.title : currentDesign
-      icon = currentType === "Special" ? <Star size={18} /> : <Palette size={18} />
+      display = currentDesign?.title ? currentDesign.title : currentDesign;
+      icon =
+        currentType === "Special" ? <Star size={18} /> : <Palette size={18} />;
     } else if (currentFile) {
-      display = currentFile?.name ?? "Eigener Upload"
-      icon = <ImageIcon size={18} />
+      display = currentFile?.name ?? "Eigener Upload";
+      icon = <ImageIcon size={18} />;
     } else if (currentType === "None") {
-      display = "Unbedruckt"
-      icon = <X size={18} />
+      display = "Unbedruckt";
+      icon = <X size={18} />;
     }
 
     return (
@@ -165,8 +198,8 @@ const DesignSelectionUI = ({
         </div>
         <LightBox uploadedFile={uploadedFile} currentFile={currentFile} />
       </>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -180,16 +213,19 @@ const DesignSelectionUI = ({
               !currentType ? "grid-cols-1 md:grid-cols-2" : "grid-cols-4"
             }`}
           >
-            {designTypes.map(type => {
-              const isSelected = currentType === type.id
-              const opacityClass = currentType && !isSelected ? "opacity-40 hover:opacity-100 scale-95" : "opacity-100"
+            {designTypes.map((type) => {
+              const isSelected = currentType === type.id;
+              const opacityClass =
+                currentType && !isSelected
+                  ? "opacity-40 hover:opacity-100 scale-95"
+                  : "opacity-100";
 
               return (
                 <div
                   key={type.id}
                   onClick={() => {
-                    setType(type.id)
-                    setDesign(null)
+                    setType(type.id);
+                    setDesign(null);
                   }}
                   className={`
                     cursor-pointer rounded-2xl border transition-all duration-300 relative overflow-hidden group
@@ -203,7 +239,9 @@ const DesignSelectionUI = ({
                 >
                   {!currentType ? (
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${type.colorClass}`}>{type.icon}</div>
+                      <div className={`p-2 rounded-lg ${type.colorClass}`}>
+                        {type.icon}
+                      </div>
                       <div className="text-left">
                         <div className="font-bold text-lg">{type.label}</div>
                         <div className="text-sm text-gray-500">{type.sub}</div>
@@ -211,14 +249,18 @@ const DesignSelectionUI = ({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-1 text-center h-full">
-                      <div className={`p-1.5 rounded-lg ${type.colorClass} ${isSelected ? "scale-110" : ""}`}>
+                      <div
+                        className={`p-1.5 rounded-lg ${type.colorClass} ${isSelected ? "scale-110" : ""}`}
+                      >
                         {React.cloneElement(type.icon, { size: 18 })}
                       </div>
-                      <div className="text-[10px] font-bold leading-tight hidden md:block">{type.label}</div>
+                      <div className="text-[10px] font-bold leading-tight hidden md:block">
+                        {type.label}
+                      </div>
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
           </div>
 
@@ -227,7 +269,7 @@ const DesignSelectionUI = ({
             <div className="animate-in slide-in-from-bottom-4 fade-in duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="p-6 bg-gray-50">
                 {currentType === "Motiv" && (
-                  <div className="flex flex-col gap-5" >
+                  <div className="flex flex-col gap-5">
                     <div className="flex flex-wrap gap-2 justify-between items-center mb-4">
                       <h4 className="font-bold flex items-center gap-2">
                         <Palette size={18} className="text-orange-600" />
@@ -244,29 +286,86 @@ const DesignSelectionUI = ({
                         <Input
                           placeholder="Motiv suchen (z.B. 'Motiv 3')"
                           value={searchTerm}
-                          onChange={e => setSearchTerm(e.target.value)}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-10"
                         />
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Search
+                          size={18}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
                       </div>
                     </div>
 
                     {/* HINWEIS: Hier ist der Fehler, der in der vorherigen Version korrigiert wurde */}
                     <div className="grid lg:grid-cols-4 grid-cols-2 md:grid-cols-2 gap-3 place-content-center place-items-center animate-in slide-in-from-bottom-2">
-                      {loading ? <div className="text-orange-500 col-span-full text-center" >
-                        Lade Motive...
-                      </div> : allMotives?.length > 0 ?
-                        allMotives.slice(0, visibleCount).filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase()))
-                        .map(m => (
-                          m.featuredImage?.url ? (
-                          <div key={m.id} onClick={() => setDesign({title:m.title,image:m.featuredImage.url})} className="aspect-square max-w-[220px] bg-white rounded-xl border-2 border-gray-200 flex items-center overflow-hidden justify-center cursor-pointer hover:border-orange-300 transition-all active:scale-95 group">
-                            <img src={m.featuredImage.url.replace(/(\.[^.]+)(\?.*)?$/, '_x300$1$2')} alt="img" className="w-full h-full object-cover"/>
-                          </div>
-                         ): null
-                        )): (<div className="text-red-500 col-span-full text-center">Keine Motive gefunden.</div>
+                      {loading ? (
+                        <div className="text-orange-500 col-span-full text-center">
+                          Lade Motive...
+                        </div>
+                      ) : allMotives?.length > 0 ? (
+                        allMotives
+                          .slice(0, visibleCount)
+                          .filter((m) =>
+                            m.title
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase()),
+                          )
+                          .map((m) =>
+                            m.featuredImage?.url ? (
+                              <div
+                                key={m.id}
+                                onClick={() =>
+                                  setDesign({
+                                    title: m.title,
+                                    image: m.featuredImage.url,
+                                  })
+                                }
+                                className="aspect-square max-w-[220px] bg-white rounded-xl border-2 border-gray-200 flex items-center overflow-hidden justify-center cursor-pointer hover:border-orange-300 transition-all active:scale-95 group"
+                              >
+                                <img
+                                  src={m.featuredImage.url.replace(
+                                    /(\.[^.]+)(\?.*)?$/,
+                                    "_x300$1$2",
+                                  )}
+                                  alt="img"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : null,
+                          )
+                      ) : (
+                        <div className="text-red-500 col-span-full text-center">
+                          Keine Motive gefunden.
+                        </div>
                       )}
                     </div>
-                    {!loading && allMotives.length > 6 ? <div className="flex justify-center h-10 mt-5" >{visibleCount > 6 ? <button className="px-6 py-3 text-orange-600 border-2 border-orange-500 rounded-xl font-bold flex items-center gap-2 cursor-pointer" onClick={() => setVisibleCount(visibleCount === 6 ? allMotives.length : 6)} >Show less designs</button> : <button className="px-6 py-3 text-orange-600 border-2 border-orange-500 rounded-xl font-bold flex items-center gap-2 cursor-pointer" onClick={() => setVisibleCount(visibleCount === 6 ? allMotives.length : 6)} >Load more designs</button>}</div> : null}
+                    {!loading && allMotives.length > 6 ? (
+                      <div className="flex justify-center h-10 mt-5">
+                        {visibleCount > 6 ? (
+                          <button
+                            className="px-6 py-3 text-orange-600 border-2 border-orange-500 rounded-xl font-bold flex items-center gap-2 cursor-pointer"
+                            onClick={() =>
+                              setVisibleCount(
+                                visibleCount === 6 ? allMotives.length : 6,
+                              )
+                            }
+                          >
+                            Show less designs
+                          </button>
+                        ) : (
+                          <button
+                            className="px-6 py-3 text-orange-600 border-2 border-orange-500 rounded-xl font-bold flex items-center gap-2 cursor-pointer"
+                            onClick={() =>
+                              setVisibleCount(
+                                visibleCount === 6 ? allMotives.length : 6,
+                              )
+                            }
+                          >
+                            Load more designs
+                          </button>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 )}
 
@@ -286,7 +385,12 @@ const DesignSelectionUI = ({
 
                     {!currentDesign ? (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in slide-in-from-bottom-2">
-                        {["Bitmoji", "Stranger Things", "Simpsons", "Disney"].map(style => (
+                        {[
+                          "Bitmoji",
+                          "Stranger Things",
+                          "Simpsons",
+                          "Disney",
+                        ].map((style) => (
                           <div
                             key={style}
                             onClick={() => setDesign(style)}
@@ -302,8 +406,14 @@ const DesignSelectionUI = ({
                           <Star size={24} className="text-purple-500" />
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900 text-lg">{currentDesign?.title ? currentDesign.title : currentDesign}</div>
-                          <div className="text-xs text-purple-700 font-medium">Style ausgewählt</div>
+                          <div className="font-bold text-gray-900 text-lg">
+                            {currentDesign?.title
+                              ? currentDesign.title
+                              : currentDesign}
+                          </div>
+                          <div className="text-xs text-purple-700 font-medium">
+                            Style ausgewählt
+                          </div>
                         </div>
                         <div className="ml-auto bg-green-100 text-green-600 p-2 rounded-full">
                           <Check size={20} />
@@ -317,8 +427,13 @@ const DesignSelectionUI = ({
                   <div>
                     {!currentFile ? (
                       <div className="border-2 border-dashed border-gray-300 bg-white rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors relative group animate-in zoom-in-95">
-                        <Upload size={24} className="text-gray-400 mb-2 group-hover:text-orange-500" />
-                        <span className="font-bold text-gray-700 group-hover:text-orange-600">Hier Datei ablegen</span>
+                        <Upload
+                          size={24}
+                          className="text-gray-400 mb-2 group-hover:text-orange-500"
+                        />
+                        <span className="font-bold text-gray-700 group-hover:text-orange-600">
+                          Hier Datei ablegen
+                        </span>
                         <input
                           type="file"
                           id="fileUpload"
@@ -327,7 +442,10 @@ const DesignSelectionUI = ({
                           onChange={handleFileUpload}
                         />
                         {/* Mock Upload Click */}
-                        <label htmlFor="fileUpload" className="absolute inset-0"></label>
+                        <label
+                          htmlFor="fileUpload"
+                          className="absolute inset-0"
+                        ></label>
                       </div>
                     ) : (
                       <div className="flex items-center gap-4 p-4 border border-green-200 bg-green-50 rounded-xl animate-in fade-in relative">
@@ -335,8 +453,12 @@ const DesignSelectionUI = ({
                           <ImageIcon className="text-green-500 w-full h-full" />
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900">Eigene Datei</div>
-                          <div className="text-xs text-green-700 font-medium">Erfolgreich hochgeladen</div>
+                          <div className="font-bold text-gray-900">
+                            Eigene Datei
+                          </div>
+                          <div className="text-xs text-green-700 font-medium">
+                            Erfolgreich hochgeladen
+                          </div>
                         </div>
                         <button
                           onClick={() => setFile(null)}
@@ -344,7 +466,10 @@ const DesignSelectionUI = ({
                         >
                           Löschen
                         </button>
-                        <LightBox uploadedFile={uploadedFile} currentFile={currentFile} />
+                        <LightBox
+                          uploadedFile={uploadedFile}
+                          currentFile={currentFile}
+                        />
                       </div>
                     )}
                   </div>
@@ -352,10 +477,22 @@ const DesignSelectionUI = ({
 
                 {currentType === "Special" && (
                   <div>
+                    <h4 className="font-bold text-gray-900 mb-2">
+                      {currentDesign === "Bitmoji"
+                        ? "Upload Bitmojis"
+                        : "Upload class photo"}
+                    </h4>
                     {!currentFile ? (
                       <div className="border-2 border-dashed border-gray-300 bg-white rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors relative group animate-in zoom-in-95">
-                        <Upload size={24} className="text-gray-400 mb-2 group-hover:text-orange-500" />
-                        <span className="font-bold text-gray-700 group-hover:text-orange-600">Hier Datei ablegen</span>
+                        <Upload
+                          size={24}
+                          className="text-gray-400 mb-2 group-hover:text-orange-500"
+                        />
+                        <span className="font-bold text-gray-700 group-hover:text-orange-600">
+                          {currentDesign === "Bitmoji"
+                            ? "Upload Bitmojis"
+                            : "Upload class photo"}
+                        </span>
                         <input
                           type="file"
                           id="fileUpload"
@@ -364,7 +501,10 @@ const DesignSelectionUI = ({
                           onChange={handleFileUpload}
                         />
                         {/* Mock Upload Click */}
-                        <label htmlFor="fileUpload" className="absolute inset-0"></label>
+                        <label
+                          htmlFor="fileUpload"
+                          className="absolute inset-0"
+                        ></label>
                       </div>
                     ) : (
                       <div className="flex items-center gap-4 p-4 border border-green-200 bg-green-50 rounded-xl animate-in fade-in relative">
@@ -372,8 +512,12 @@ const DesignSelectionUI = ({
                           <ImageIcon className="text-green-500 w-full h-full" />
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900">Eigene Datei</div>
-                          <div className="text-xs text-green-700 font-medium">Erfolgreich hochgeladen</div>
+                          <div className="font-bold text-gray-900">
+                            Eigene Datei
+                          </div>
+                          <div className="text-xs text-green-700 font-medium">
+                            Erfolgreich hochgeladen
+                          </div>
                         </div>
                         <button
                           onClick={() => setFile(null)}
@@ -401,7 +545,7 @@ const DesignSelectionUI = ({
                     label="Zusatzwünsche / Text"
                     placeholder="z.b. 'Abi 2025' oder Änderungswunsch..."
                     value={currentNote}
-                    onChange={e => setNote(e.target.value)}
+                    onChange={(e) => setNote(e.target.value)}
                   />
                 </div>
               </div>
@@ -410,7 +554,7 @@ const DesignSelectionUI = ({
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DesignSelectionUI
+export default DesignSelectionUI;
