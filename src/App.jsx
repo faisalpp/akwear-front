@@ -488,6 +488,7 @@ export default function App() {
     productPrice,
     sizes,
     bundleSizes = null,
+    note = "",
   ) => {
     const newItem = {
       id: Date.now().toString(),
@@ -497,6 +498,7 @@ export default function App() {
       sizes,
       bundleSizes,
       product,
+      note,
     };
     setCart([...cart, newItem]);
     setIsPanelOpen(false);
@@ -1955,6 +1957,11 @@ export default function App() {
                             ></div>{" "}
                             – Design: {designTxt}
                           </div>
+                          {item.note && (
+                            <div className="text-xs text-orange-600 mt-1 italic bg-orange-50 p-1 rounded">
+                              Note: {item.note}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
