@@ -120,6 +120,25 @@ export default function App() {
   const [individualDesigns, setIndividualDesigns] = useState({});
   const [editingDesignId, setEditingDesignId] = useState(null);
 
+  const backOptions = [
+    {
+      id: "names",
+      label: "Namensliste",
+      icon: <AlignJustify />,
+      sub: "Klassisch",
+    },
+    { id: "playlist", label: "Playlist", icon: <Music />, sub: "+ 2,00 €" },
+    { id: "flags", label: "Flaggen", icon: <Flag />, sub: "+ 2,00 €" },
+    { id: "zodiac", label: "Sternzeichen", icon: <Star />, sub: "+ 2,00 €" },
+    {
+      id: "upload",
+      label: "Eigenes Bild",
+      icon: <Upload />,
+      sub: "+ 3,00 €",
+    },
+    { id: "none", label: "Ohne Druck", icon: <X />, sub: "Leer" },
+  ];
+
   // -- STATE: PRODUCTS --
   const [productCategory, setProductCategory] = useState(null);
   const [isChoosingMore, setIsChoosingMore] = useState(false);
@@ -1194,25 +1213,6 @@ export default function App() {
   };
 
   const renderStep3 = () => {
-    const backOptions = [
-      {
-        id: "names",
-        label: "Namensliste",
-        icon: <AlignJustify />,
-        sub: "Klassisch",
-      },
-      { id: "playlist", label: "Playlist", icon: <Music />, sub: "+ 2,00 €" },
-      { id: "flags", label: "Flaggen", icon: <Flag />, sub: "+ 2,00 €" },
-      { id: "zodiac", label: "Sternzeichen", icon: <Star />, sub: "+ 2,00 €" },
-      {
-        id: "upload",
-        label: "Eigenes Bild",
-        icon: <Upload />,
-        sub: "+ 3,00 €",
-      },
-      { id: "none", label: "Ohne Druck", icon: <X />, sub: "Leer" },
-    ];
-
     const handleBackImageUpload = (e) => {
       const file = e.target.files[0];
       const fileExt = file
@@ -2046,29 +2046,147 @@ export default function App() {
                     return (
                       <div
                         key={i}
-                        className="flex justify-between text-sm mb-2 border-b border-dashed border-gray-100 pb-2"
+                        className="flex justify-between text-sm mb-3 bg-gray-50 p-3 rounded-lg"
                       >
-                        <div>
-                          <span className="font-bold">
-                            {qty}x {item.product.title}
-                          </span>
-                          <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                            <div
-                              style={{ background: item.color.split(" - ")[0] }}
-                              className={`h-10 w-10 rounded-full`}
-                            ></div>{" "}
-                            – Design: {designTxt}
+                        <div className="w-full">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-bold text-gray-900">
+                              {qty}x {item.product.title}
+                            </span>
+                            <span className="text-xs font-mono bg-white px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">
+                              {item.color}
+                            </span>
                           </div>
-                          {item.note && (
-                            <div className="text-xs text-orange-600 mt-1 italic bg-orange-50 p-1 rounded">
-                              Note: {item.note}
+
+                          <div className="grid gap-1 text-xs text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <Palette size={12} className="text-orange-500" />
+                              <span>
+                                Front-Design: <b>{designTxt}</b>
+                              </span>
                             </div>
-                          )}
+
+                            {item.note && (
+                              <div className="mt-2 text-xs text-orange-700 bg-orange-50 p-2 rounded border border-orange-100 italic flex items-start gap-2">
+                                <AlertCircle
+                                  size={12}
+                                  className="mt-0.5 shrink-0"
+                                />
+                                <span>Anmerkung: {item.note}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* 2. RÜCKSEITE / NAMENSLI STE */}
+                {backList.length > 0 && (
+                  <div className="border-b border-gray-100 pb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Layers size={16} className="text-blue-600" />
+                      <div className="text-xs font-bold text-gray-900 uppercase">
+                        Rücken-Design:{" "}
+                        {backOptions.find((o) => o.id === backType)?.label ||
+                          backType}
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100 max-h-[200px] overflow-y-auto">
+                      {backList.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-xs py-1.5 border-b border-blue-100/50 last:border-0 hover:bg-white/50 px-2 rounded transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-gray-700 w-6">
+                              {idx + 1}.
+                            </span>
+
+                            {/* EXTRA INFO BASED ON TYPE */}
+                            {backType === "playlist" && item.cover && (
+                              <img
+                                src={item.cover}
+                                className="w-6 h-6 rounded object-cover"
+                                alt="cover"
+                              />
+                            )}
+                            {backType === "flags" && item.flag && (
+                              <img
+                                src={item.flag}
+                                className="w-6 h-4 rounded object-cover shadow-sm"
+                                alt="flag"
+                              />
+                            )}
+                            {backType === "zodiac" &&
+                              /^\d/.test(item.subtext) === false && (
+                                <Star size={12} className="text-indigo-500" />
+                              )}
+
+                            <div>
+                              {item.subtext && (
+                                <div className="font-bold text-gray-900">
+                                  {item.subtext}
+                                </div>
+                              )}
+                              <div className="text-gray-600">{item.text}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. PERSONALISIERUNG (EINZELNAMEN) */}
+                {hasPerso && Object.keys(persoData).length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <CreditCard size={16} className="text-green-600" />{" "}
+                      {/* Using CreditCard as placeholder for ID card/Perso */}
+                      <div className="text-xs font-bold text-gray-900 uppercase">
+                        Einzelnamen (Druck)
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {Object.entries(persoData).map(([sizeKey, names]) => {
+                        if (!names || names.length === 0) return null;
+                        // names string "Name1, Name2"
+                        const nameList = names
+                          .split(",")
+                          .filter((n) => n.trim());
+                        if (nameList.length === 0) return null;
+
+                        return (
+                          <div
+                            key={sizeKey}
+                            className="bg-green-50 rounded-lg p-3 border border-green-100"
+                          >
+                            <div className="text-xs font-bold text-green-800 mb-1 border-b border-green-200 pb-1">
+                              Größe {sizeKey}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {nameList.map((name, nIdx) => (
+                                <span
+                                  key={nIdx}
+                                  className="text-[10px] bg-white border border-green-200 px-1.5 py-0.5 rounded text-green-700 font-medium shadow-sm"
+                                >
+                                  {name.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 text-[10px] text-gray-400 text-right">
+                      Druckpositionen: {persoPositions.join(", ")}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
