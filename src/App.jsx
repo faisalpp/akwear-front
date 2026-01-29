@@ -2017,10 +2017,16 @@ export default function App() {
             </div>
 
             {showCheckoutDetails && (
-              <div className="p-6 space-y-6 bg-white animate-in slide-in-from-top-2">
-                <div className="border-b border-gray-100 pb-4">
-                  <div className="text-xs font-bold text-gray-400 uppercase mb-2">
-                    Details
+              <div className="p-6 space-y-8 bg-white animate-in slide-in-from-top-2">
+                {/* --- SCHRITT 1: PRODUKTE --- */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">
+                      1
+                    </span>
+                    <div className="text-xs font-bold text-gray-900 uppercase">
+                      Produkte & Größen
+                    </div>
                   </div>
 
                   {cart.map((item, i) => {
@@ -2028,162 +2034,231 @@ export default function App() {
                       item.sizes || item.bundleSizes?.hoodie || {},
                     ).reduce((a, b) => a + b, 0);
 
+                    // Determine Design Text for specific item
                     const individual = individualDesigns[item.productId];
                     let designTxt = "Standard";
-
                     if (designMode === "mixed") {
                       designTxt = individual
-                        ? individual.design?.title
-                          ? individual.design.title
-                          : individual.design || individual.type
+                        ? individual.design?.title ||
+                          individual.design ||
+                          individual.type
                         : "Nicht gewählt";
                     } else {
-                      designTxt = selectedDesign?.title
-                        ? selectedDesign.title
-                        : selectedDesign || frontDesignType || "Standard";
+                      designTxt =
+                        selectedDesign?.title ||
+                        selectedDesign ||
+                        frontDesignType ||
+                        "Standard";
                     }
 
                     return (
                       <div
                         key={i}
-                        className="flex justify-between text-sm mb-3 bg-gray-50 p-3 rounded-lg"
+                        className="flex flex-col gap-2 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100/50"
                       >
-                        <div className="w-full">
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-bold text-gray-900">
-                              {qty}x {item.product.title}
-                            </span>
-                            <span className="text-xs font-mono bg-white px-1.5 py-0.5 rounded text-gray-500 border border-gray-200">
+                        <div className="flex justify-between items-start">
+                          <div className="font-bold text-gray-900 text-sm">
+                            {qty}x {item.product.title}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono bg-white px-2 py-1 rounded text-gray-600 border border-gray-200 shadow-sm">
                               {item.color}
                             </span>
                           </div>
-
-                          <div className="grid gap-1 text-xs text-gray-600">
-                            <div className="flex items-center gap-2">
-                              <Palette size={12} className="text-orange-500" />
-                              <span>
-                                Front-Design: <b>{designTxt}</b>
-                              </span>
-                            </div>
-
-                            {item.note && (
-                              <div className="mt-2 text-xs text-orange-700 bg-orange-50 p-2 rounded border border-orange-100 italic flex items-start gap-2">
-                                <AlertCircle
-                                  size={12}
-                                  className="mt-0.5 shrink-0"
-                                />
-                                <span>Anmerkung: {item.note}</span>
-                              </div>
-                            )}
-                          </div>
                         </div>
+
+                        {item.note && (
+                          <div className="text-xs text-orange-700 bg-orange-50 p-2 rounded border border-orange-100 italic flex items-start gap-2">
+                            <AlertCircle
+                              size={12}
+                              className="mt-0.5 shrink-0"
+                            />
+                            <span>{item.note}</span>
+                          </div>
+                        )}
+
+                        {/* Show design per item if mixed */}
+                        {designMode === "mixed" && (
+                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Palette size={10} /> Motiv: <b>{designTxt}</b>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* 2. RÜCKSEITE / NAMENSLI STE */}
-                {backList.length > 0 && (
-                  <div className="border-b border-gray-100 pb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Layers size={16} className="text-blue-600" />
-                      <div className="text-xs font-bold text-gray-900 uppercase">
-                        Rücken-Design:{" "}
-                        {backOptions.find((o) => o.id === backType)?.label ||
-                          backType}
-                      </div>
+                {/* --- SCHRITT 2: FRONT-DESIGN --- */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">
+                      2
+                    </span>
+                    <div className="text-xs font-bold text-gray-900 uppercase">
+                      Front-Design
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg flex flex-col gap-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Modus:</span>
+                      <span className="font-bold">
+                        {designMode === "mixed"
+                          ? "Verschiedene Motive"
+                          : "Alle gleiches Motiv"}
+                      </span>
                     </div>
 
-                    <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100 max-h-[200px] overflow-y-auto">
-                      {backList.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between text-xs py-1.5 border-b border-blue-100/50 last:border-0 hover:bg-white/50 px-2 rounded transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="font-bold text-gray-700 w-6">
-                              {idx + 1}.
-                            </span>
+                    {designMode === "same" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Motiv:</span>
+                        <span className="font-bold text-indigo-600">
+                          {selectedDesign?.title ||
+                            selectedDesign ||
+                            frontDesignType ||
+                            "Standard"}
+                        </span>
+                      </div>
+                    )}
 
-                            {/* EXTRA INFO BASED ON TYPE */}
+                    {designNote && (
+                      <div className="mt-2 text-xs text-gray-600 bg-white p-2 rounded border border-gray-200 italic">
+                        " {designNote} "
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* --- SCHRITT 3: RÜCKEN-DESIGN --- */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                      3
+                    </span>
+                    <div className="text-xs font-bold text-gray-900 uppercase">
+                      Rücken-Design
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100">
+                    <div className="flex items-center gap-2 mb-3 text-sm font-bold text-blue-900">
+                      {backOptions.find((o) => o.id === backType)?.icon || (
+                        <Layers size={16} />
+                      )}
+                      {backOptions.find((o) => o.id === backType)?.label ||
+                        backType}
+                    </div>
+
+                    {backList.length > 0 ? (
+                      <div className="max-h-[150px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                        {backList.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 text-xs py-1 px-2 bg-white rounded border border-blue-100 text-gray-700"
+                          >
+                            <span className="font-mono font-bold text-gray-400 w-4">
+                              {idx + 1}
+                            </span>
+                            {/* Icons for specific types */}
                             {backType === "playlist" && item.cover && (
                               <img
                                 src={item.cover}
-                                className="w-6 h-6 rounded object-cover"
-                                alt="cover"
+                                className="w-4 h-4 rounded"
+                                alt=""
                               />
                             )}
                             {backType === "flags" && item.flag && (
                               <img
                                 src={item.flag}
-                                className="w-6 h-4 rounded object-cover shadow-sm"
-                                alt="flag"
+                                className="w-4 h-3 rounded shadow-sm"
+                                alt=""
                               />
                             )}
                             {backType === "zodiac" &&
                               /^\d/.test(item.subtext) === false && (
-                                <Star size={12} className="text-indigo-500" />
+                                <Star size={10} className="text-indigo-400" />
                               )}
 
-                            <div>
-                              {item.subtext && (
-                                <div className="font-bold text-gray-900">
-                                  {item.subtext}
-                                </div>
-                              )}
-                              <div className="text-gray-600">{item.text}</div>
-                            </div>
+                            <span className="truncate flex-1">
+                              {item.subtext ? <b>{item.subtext} - </b> : null}{" "}
+                              {item.text}
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">
+                        Keine Einträge
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* 3. PERSONALISIERUNG (EINZELNAMEN) */}
-                {hasPerso && Object.keys(persoData).length > 0 && (
+                {/* --- SCHRITT 4: PERSONALISIERUNG --- */}
+                {hasPerso && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <CreditCard size={16} className="text-green-600" />{" "}
-                      {/* Using CreditCard as placeholder for ID card/Perso */}
+                      <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">
+                        4
+                      </span>
                       <div className="text-xs font-bold text-gray-900 uppercase">
-                        Einzelnamen (Druck)
+                        Einzelnamen / Positionen
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {Object.entries(persoData).map(([sizeKey, names]) => {
-                        if (!names || names.length === 0) return null;
-                        // names string "Name1, Name2"
-                        const nameList = names
-                          .split(",")
-                          .filter((n) => n.trim());
-                        if (nameList.length === 0) return null;
+                    <div className="bg-green-50/50 rounded-xl p-3 border border-green-100 space-y-4">
+                      {/* Positionen */}
+                      <div className="flex justify-between items-center text-sm border-b border-green-100 pb-2">
+                        <span className="text-gray-500">
+                          Gewählte Positionen:
+                        </span>
+                        <div className="flex gap-1">
+                          {persoPositions.length > 0 ? (
+                            persoPositions.map((p) => (
+                              <span
+                                key={p}
+                                className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold"
+                              >
+                                {p}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400 italic">Keine</span>
+                          )}
+                        </div>
+                      </div>
 
-                        return (
-                          <div
-                            key={sizeKey}
-                            className="bg-green-50 rounded-lg p-3 border border-green-100"
-                          >
-                            <div className="text-xs font-bold text-green-800 mb-1 border-b border-green-200 pb-1">
-                              Größe {sizeKey}
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {nameList.map((name, nIdx) => (
-                                <span
-                                  key={nIdx}
-                                  className="text-[10px] bg-white border border-green-200 px-1.5 py-0.5 rounded text-green-700 font-medium shadow-sm"
-                                >
-                                  {name.trim()}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-3 text-[10px] text-gray-400 text-right">
-                      Druckpositionen: {persoPositions.join(", ")}
+                      {/* Namen Liste */}
+                      {Object.keys(persoData).length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {Object.entries(persoData).map(([sizeKey, names]) => {
+                            const nameList = names
+                              ? names.split(",").filter((n) => n.trim())
+                              : [];
+                            if (nameList.length === 0) return null;
+                            return (
+                              <div
+                                key={sizeKey}
+                                className="bg-white border border-green-100 rounded p-2"
+                              >
+                                <div className="text-[10px] font-bold text-green-800 border-b border-gray-100 pb-1 mb-1">
+                                  Größe {sizeKey}
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {nameList.map((n, i) => (
+                                    <span
+                                      key={i}
+                                      className="text-[10px] text-gray-600 bg-gray-50 px-1 rounded"
+                                    >
+                                      {n}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
