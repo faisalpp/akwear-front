@@ -30,6 +30,7 @@ import {
   HelpCircle,
   Globe,
   GripVertical,
+  ChevronRight,
 } from "lucide-react";
 import Button from "./components/ui/Button";
 import Card from "./components/ui/Card";
@@ -72,6 +73,22 @@ const calculateAge = (birthday) => {
 // --- BASE COMPONENTS ---
 
 // --- INDIVIDUAL PERSONALIZATION MODAL (New Component) ---
+
+// Zodiac signs list
+const ZODIAC_SIGNS = [
+  "Widder",
+  "Stier",
+  "Zwillinge",
+  "Krebs",
+  "Löwe",
+  "Jungfrau",
+  "Waage",
+  "Skorpion",
+  "Schütze",
+  "Steinbock",
+  "Wassermann",
+  "Fische",
+];
 
 // --- MAIN APP ---
 
@@ -564,6 +581,7 @@ export default function App() {
           subtext,
           cover: backType === "playlist" ? playListBackImg?.data : null,
           flag: backType === "flags" ? specialBackInput.flag?.flags?.png : null,
+          zodiacIcon: backType === "zodiac" ? <Star size={16} /> : null, // Storing icon for consistency
         },
       ]);
       if (backType !== "playlist") {
@@ -1443,6 +1461,42 @@ export default function App() {
 
                 {backType === "zodiac" && (
                   <div className="bg-gray-50 p-4 rounded-xl mb-6 space-y-3">
+                    {/* Toggle for Input Type */}
+                    <div className="flex bg-gray-200 p-1 rounded-lg mb-2">
+                      <button
+                        className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${
+                          !specialBackInput.dateMode
+                            ? "bg-white shadow text-gray-800"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        onClick={() =>
+                          setSpecialBackInput({
+                            ...specialBackInput,
+                            dateMode: false,
+                            zodiac: { name: "" },
+                          })
+                        }
+                      >
+                        Sternzeichen
+                      </button>
+                      <button
+                        className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${
+                          specialBackInput.dateMode
+                            ? "bg-white shadow text-gray-800"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        onClick={() =>
+                          setSpecialBackInput({
+                            ...specialBackInput,
+                            dateMode: true,
+                            zodiac: { name: "" },
+                          })
+                        }
+                      >
+                        Geburtsdatum
+                      </button>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                       <Input
                         placeholder="Dein Name"
@@ -1454,16 +1508,45 @@ export default function App() {
                           })
                         }
                       />
-                      <Input
-                        placeholder="Geburtsdatum oder Sternzeichen"
-                        value={specialBackInput.zodiac}
-                        onChange={(e) =>
-                          setSpecialBackInput({
-                            ...specialBackInput,
-                            zodiac: { name: e.target.value },
-                          })
-                        }
-                      />
+                      {specialBackInput.dateMode ? (
+                        <Input
+                          type="date"
+                          value={specialBackInput.zodiac?.name || ""}
+                          onChange={(e) =>
+                            setSpecialBackInput({
+                              ...specialBackInput,
+                              zodiac: { name: e.target.value },
+                            })
+                          }
+                          onClick={(e) =>
+                            e.target.showPicker && e.target.showPicker()
+                          }
+                        />
+                      ) : (
+                        <div className="relative">
+                          <select
+                            className="w-full p-3 bg-white border border-gray-300 rounded-xl appearance-none outline-none cursor-pointer"
+                            value={specialBackInput.zodiac?.name || ""}
+                            onChange={(e) =>
+                              setSpecialBackInput({
+                                ...specialBackInput,
+                                zodiac: { name: e.target.value },
+                              })
+                            }
+                          >
+                            <option value="">Wählen...</option>
+                            {ZODIAC_SIGNS.map((sign) => (
+                              <option key={sign} value={sign}>
+                                {sign}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronRight
+                            size={16}
+                            className="absolute right-3 top-3.5 text-gray-400 pointer-events-none rotate-90"
+                          />
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={handleBackAdd}
@@ -1499,7 +1582,7 @@ export default function App() {
                         });
                       }}
                       className={`flex items-center gap-3 bg-white rounded-3xl border border-gray-100 shadow-sm w-fit ${
-                        backType === "playlist" || backType === "flags"
+                        ["playlist", "flags", "zodiac"].includes(backType)
                           ? "p-2 pr-4 rounded-xl"
                           : "py-2 pr-3 pl-2"
                       }`}
@@ -1545,6 +1628,25 @@ export default function App() {
                               <Flag size={16} />
                             </div>
                           )}
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-900 text-sm leading-tight">
+                              {item.subtext}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {item.text}
+                            </span>
+                          </div>
+                        </div>
+                      ) : backType === "zodiac" ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100">
+                            {/* Auto-detect if it looks like a date or text to choose icon, or just use Star for generic */}
+                            {/^\d/.test(item.subtext) ? (
+                              <span className="text-[10px] font-bold">12</span>
+                            ) : (
+                              <Star size={16} fill="currentColor" />
+                            )}
+                          </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-gray-900 text-sm leading-tight">
                               {item.subtext}
