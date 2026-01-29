@@ -176,6 +176,9 @@ export default function App() {
   const [showPositionSelection, setShowPositionSelection] = useState(true);
 
   const [persoData, setPersoData] = useState({});
+  const [persoType, setPersoType] = useState("text"); // 'text' or 'file'
+  const [persoFile, setPersoFile] = useState(null);
+  const [persoPreview, setPersoPreview] = useState(null);
   const [discountError, setDiscountError] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(null);
 
@@ -686,13 +689,24 @@ export default function App() {
         sendWhatsappPreview: userData.sendWhatsappPreview,
       },
       products: cart.map((item) => {
+        const individual = individualDesigns[item.productId];
         return {
           product_id: item.productId,
+          title: item.product.title, // Also useful for backend reference
           quantity: Object.values(
             item.sizes || item.bundleSizes?.hoodie || {},
           ).reduce((a, b) => a + b, 0),
           color: item.color,
           sizes: item.sizes || item.bundleSizes,
+          note: item.note || "", // Product configuration note
+          // If mixed mode, include specific design info here
+          frontDesign:
+            designMode === "mixed" && individual
+              ? {
+                  type: individual.type,
+                  design: individual.design,
+                }
+              : null,
         };
       }),
       design: {
@@ -714,6 +728,8 @@ export default function App() {
         enabled: hasPerso,
         positions: persoPositions,
         data: persoData,
+        type: persoType, // 'text' or 'file'
+        fileName: persoFile ? persoFile.name : null, // Metadata for the file
       },
       pricing: {
         subtotal: financials.subtotal,
@@ -1953,23 +1969,130 @@ export default function App() {
               </div>
             )}
 
-            <h3 className="font-bold text-xl mb-4">2. Namen zuordnen</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Wählen Sie zuerst die Position(en) oben aus.
-            </p>
-            <Button
-              onClick={() => setIsPersoModalOpen(true)}
-              className="w-full"
-              disabled={persoPositions.length === 0}
-            >
-              Namen eintragen (
-              {
-                Object.values(persoData).flatMap((arr) =>
-                  arr.filter((name) => name.trim().length > 0),
-                ).length
-              }{" "}
-              Namen)
-            </Button>
+            <h3 className="font-bold text-xl mb-4">
+              2. Was soll gedruckt werden?
+            </h3>
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+              <button
+                onClick={() => setPersoType("text")}
+                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                  persoType === "text"
+                    ? "bg-white shadow text-gray-900"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <AlignJustify size={16} /> Namensliste
+                </div>
+              </button>
+              <button
+                onClick={() => setPersoType("file")}
+                className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all ${
+                  persoType === "file"
+                    ? "bg-white shadow text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Upload size={16} /> Eigenes Motiv
+                </div>
+              </button>
+            </div>
+
+            {persoType === "text" ? (
+              <>
+                <p className="text-sm text-gray-500 mb-4">
+                  Tragen Sie hier die Namen für jeden Hoodie einzeln ein.
+                </p>
+                <Button
+                  onClick={() => setIsPersoModalOpen(true)}
+                  className="w-full"
+                  disabled={persoPositions.length === 0}
+                >
+                  Namen eintragen (
+                  {
+                    Object.values(persoData).flatMap((arr) =>
+                      arr.filter((name) => name.trim().length > 0),
+                    ).length
+                  }{" "}
+                  Namen)
+                </Button>
+              </>
+            ) : (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all hover:bg-white hover:border-indigo-300">
+                <input
+                  type="file"
+                  id="perso-file-upload"
+                  className="hidden"
+                  accept="image/png, image/jpeg, image/jpg, image/webp, .pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      setPersoFile(file);
+                      if (file.type.startsWith("image/")) {
+                        setPersoPreview(URL.createObjectURL(file));
+                      } else {
+                        setPersoPreview(null);
+                      }
+                    }
+                  }}
+                />
+
+                {persoFile ? (
+                  <div className="relative">
+                    <div className="flex flex-col items-center gap-3">
+                      {persoPreview ? (
+                        <img
+                          src={persoPreview}
+                          alt="Preview"
+                          className="w-24 h-24 object-contain rounded-lg border border-gray-200 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm">
+                          <Check size={32} />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-gray-900 break-all">
+                          {persoFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(persoFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPersoFile(null);
+                          setPersoPreview(null);
+                        }}
+                        className="text-red-500 text-xs font-bold hover:underline"
+                      >
+                        Entfernen
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="perso-file-upload"
+                    className="cursor-pointer block h-full w-full"
+                  >
+                    <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Upload size={32} />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-1">
+                      Datei hier hochladen
+                    </h4>
+                    <p className="text-sm text-gray-500 mb-4">
+                      PNG, JPG, PDF (max. 10MB)
+                    </p>
+                    <span className="inline-block px-4 py-2 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-lg shadow-sm">
+                      Datei auswählen
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -2195,73 +2318,108 @@ export default function App() {
                 </div>
 
                 {/* --- SCHRITT 4: PERSONALISIERUNG --- */}
-                {hasPerso && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">
-                        4
-                      </span>
-                      <div className="text-xs font-bold text-gray-900 uppercase">
-                        Einzelnamen / Positionen
-                      </div>
-                    </div>
-
-                    <div className="bg-green-50/50 rounded-xl p-3 border border-green-100 space-y-4">
-                      {/* Positionen */}
-                      <div className="flex justify-between items-center text-sm border-b border-green-100 pb-2">
-                        <span className="text-gray-500">
-                          Gewählte Positionen:
+                {/* --- SCHRITT 4: PERSONALISIERUNG --- */}
+                {hasPerso &&
+                  ((persoType === "file" && persoFile) ||
+                    (persoType === "text" &&
+                      Object.keys(persoData).length > 0)) && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold">
+                          4
                         </span>
-                        <div className="flex gap-1">
-                          {persoPositions.length > 0 ? (
-                            persoPositions.map((p) => (
-                              <span
-                                key={p}
-                                className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold"
-                              >
-                                {p}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-gray-400 italic">Keine</span>
-                          )}
+                        <div className="text-xs font-bold text-gray-900 uppercase">
+                          {persoType === "file"
+                            ? "Eigenes Motiv"
+                            : "Einzelnamen"}{" "}
+                          / Positionen
                         </div>
                       </div>
 
-                      {/* Namen Liste */}
-                      {Object.keys(persoData).length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {Object.entries(persoData).map(([sizeKey, names]) => {
-                            const nameList = names
-                              ? names.split(",").filter((n) => n.trim())
-                              : [];
-                            if (nameList.length === 0) return null;
-                            return (
-                              <div
-                                key={sizeKey}
-                                className="bg-white border border-green-100 rounded p-2"
-                              >
-                                <div className="text-[10px] font-bold text-green-800 border-b border-gray-100 pb-1 mb-1">
-                                  Größe {sizeKey}
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {nameList.map((n, i) => (
-                                    <span
-                                      key={i}
-                                      className="text-[10px] text-gray-600 bg-gray-50 px-1 rounded"
-                                    >
-                                      {n}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
+                      <div className="bg-green-50/50 rounded-xl p-3 border border-green-100 space-y-4">
+                        {/* Positionen */}
+                        <div className="flex justify-between items-center text-sm border-b border-green-100 pb-2">
+                          <span className="text-gray-500">
+                            Gewählte Positionen:
+                          </span>
+                          <div className="flex gap-1">
+                            {persoPositions.length > 0 ? (
+                              persoPositions.map((p) => (
+                                <span
+                                  key={p}
+                                  className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold"
+                                >
+                                  {p}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 italic">
+                                Keine
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
+
+                        {/* CONTENT BASED ON TYPE */}
+                        {persoType === "file" ? (
+                          <div className="flex items-center gap-3 bg-white p-2 rounded border border-green-100">
+                            {persoPreview ? (
+                              <img
+                                src={persoPreview}
+                                className="w-10 h-10 object-cover rounded bg-green-50"
+                                alt="Preview"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-green-100 rounded flex items-center justify-center text-green-600">
+                                <Check size={20} />
+                              </div>
+                            )}
+                            <div className="overflow-hidden">
+                              <div className="text-xs text-gray-500 uppercase font-bold">
+                                Datei hochgeladen
+                              </div>
+                              <div className="font-bold text-gray-900 truncate text-sm">
+                                {persoFile.name}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          Object.keys(persoData).length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {Object.entries(persoData).map(
+                                ([sizeKey, names]) => {
+                                  const nameList = names
+                                    ? names.split(",").filter((n) => n.trim())
+                                    : [];
+                                  if (nameList.length === 0) return null;
+                                  return (
+                                    <div
+                                      key={sizeKey}
+                                      className="bg-white border border-green-100 rounded p-2"
+                                    >
+                                      <div className="text-[10px] font-bold text-green-800 border-b border-gray-100 pb-1 mb-1">
+                                        Größe {sizeKey}
+                                      </div>
+                                      <div className="flex flex-wrap gap-1">
+                                        {nameList.map((n, i) => (
+                                          <span
+                                            key={i}
+                                            className="text-[10px] text-gray-600 bg-gray-50 px-1 rounded"
+                                          >
+                                            {n}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                },
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
           </div>
