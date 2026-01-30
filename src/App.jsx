@@ -31,6 +31,7 @@ import {
   Globe,
   GripVertical,
   ChevronRight,
+  Eye, // Added Eye icon for preview button
 } from "lucide-react";
 import Button from "./components/ui/Button";
 import Card from "./components/ui/Card";
@@ -138,6 +139,8 @@ export default function App() {
     },
     { id: "none", label: "Ohne Druck", icon: <X />, sub: "Leer" },
   ];
+
+  const [showFrontPreview, setShowFrontPreview] = useState(false);
 
   // -- STATE: PRODUCTS --
   const [productCategory, setProductCategory] = useState(null);
@@ -2179,11 +2182,19 @@ export default function App() {
                         key={i}
                         className="flex flex-col gap-2 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100/50"
                       >
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                           <div className="font-bold text-gray-900 text-sm">
                             {qty}x {item.product.title}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {item.color && item.color.startsWith("#") && (
+                              <div
+                                className="w-6 h-6 rounded-full border border-gray-200 shadow-sm"
+                                style={{
+                                  backgroundColor: item.color.split(" - ")[0],
+                                }}
+                              />
+                            )}
                             <span className="text-xs font-mono bg-white px-2 py-1 rounded text-gray-600 border border-gray-200 shadow-sm">
                               {item.color}
                             </span>
@@ -2233,14 +2244,55 @@ export default function App() {
                     </div>
 
                     {designMode === "same" && (
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-sm items-center">
                         <span className="text-gray-500">Motiv:</span>
-                        <span className="font-bold text-indigo-600">
-                          {selectedDesign?.title ||
-                            selectedDesign ||
-                            frontDesignType ||
-                            "Standard"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-indigo-600">
+                            {selectedDesign?.title ||
+                              selectedDesign ||
+                              frontDesignType ||
+                              "Standard"}
+                          </span>
+                          {/* PREVIEW BUTTON FOR UPLOADED FILE */}
+                          {(uploadedFile ||
+                            (selectedDesign && selectedDesign.image)) && (
+                            <>
+                              <button
+                                onClick={() => setShowFrontPreview(true)}
+                                className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 font-bold hover:bg-indigo-100 flex items-center gap-1 cursor-pointer"
+                              >
+                                <Eye size={12} /> Vorschau
+                              </button>
+
+                              {showFrontPreview && (
+                                <div
+                                  className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in"
+                                  onClick={() => setShowFrontPreview(false)}
+                                >
+                                  <div
+                                    className="relative max-w-3xl max-h-[90vh] w-full"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      onClick={() => setShowFrontPreview(false)}
+                                      className="absolute -top-10 right-0 text-white hover:text-gray-300 cursor-pointer"
+                                    >
+                                      <X size={32} />
+                                    </button>
+                                    <img
+                                      src={
+                                        uploadedFile?.data ||
+                                        selectedDesign?.image
+                                      }
+                                      alt="Design Preview"
+                                      className="w-full h-full object-contain rounded-lg shadow-2xl bg-white"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
 
